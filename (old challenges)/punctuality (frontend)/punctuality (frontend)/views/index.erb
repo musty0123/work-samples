@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+
+
+<html>
+    <div>
+      <form>
+        <input type="date" id="from" name="from" value="2013-09-10">
+        <input type="date" id="to" name="to" value="2013-11-10">
+        <input type="button" value="submit" id="smit">
+      </form>
+    </div>
+
+  <div id="test"></div>
+ <script type='text/javascript' defer>
+
+  document.getElementById("smit").onclick = function () {
+
+    let fromDate = document.getElementById("from").value;
+    let toDate = document.getElementById("to").value;
+
+    buildPunctuailityTable(fromDate, toDate)
+
+  }
+
+  const buildPunctuailityTable = (from, to) =>  {
+
+      const table1 = document.createElement('table');
+      const header = table1.createTHead().insertRow();
+
+      header.insertCell(0).innerText = 'Day';
+      header.insertCell(1).innerText = 'Rostered Start';
+      header.insertCell(2).innerText = 'Actual Start';
+      header.insertCell(3).innerText = 'Rostered Finish';
+      header.insertCell(4).innerText = 'Actual End';
+      const tableBody = document.createElement('tbody');
+      table1.appendChild(tableBody);
+
+       let table = document.getElementById("data");
+           fetch(`/rosters/${from}/${to}`)
+                 .then(res => res.json())
+                 .then(data => {
+                  
+                  data.forEach(roster => {
+                    let shiftData = fetch(`/shift/${roster.date}`)
+                                      .then(res => res.json())
+                                      .then(shiftData => {
+
+                                          let startDateShift = new Date(shiftData[0].start)
+                                          let startDateRoster = new Date(roster.start)
+                                          let endDateShift = new Date(shiftData[0].finish)
+                                          let endDateRoster = new Date(roster.finish)
+                                          
+                                          let startTime = startDateShift <= startDateRoster ? "On Time" : "Late";
+                                          let finishTime = endDateRoster <= endDateShift ? "On Time" : "Left Early"; 
+      
+                                          const row = tableBody.insertRow();
+                                          rosterStarthours = startDateRoster.getHours();
+                                          let dateCell = row.insertCell(0)
+                                          let rosterStartDateCell = row.insertCell(1)
+                                          let startTimeCell = row.insertCell(2)
+                                          let rosterEndDateCell = row.insertCell(3)
+                                          let finishTimeCell = row.insertCell(4)
+                                          
+
+
+                                          dateCell.innerText = roster.date;
+                                          rosterStartDateCell.innerText = normaliseDate(startDateRoster)
+                                          startTimeCell.innerText = startTime;
+                                          rosterEndDateCell.innerText = normaliseDate(endDateRoster);
+                                          finishTimeCell.innerText = finishTime;
+
+                                          finishTimeCell.onmouseover = function () {
+                                            finishTimeCell.innerText = normaliseDate(endDateShift)
+
+                                          }
+
+                                          finishTimeCell.onmouseout = function () {
+                                            finishTimeCell.innerText = finishTime
+    
+                                          }
+                                          
+                                          startTimeCell.onmouseover = function () {
+                                            startTimeCell.innerText = normaliseDate(startDateShift)
+
+                                          }
+
+                                          startTimeCell.onmouseout = function () {
+                                            startTimeCell.innerText = startTime
+    
+                                          }
+                        })
+                  })
+                  
+        
+        })
+
+      document.getElementById('test').appendChild(table1);
+    
+  }
+
+  const normaliseDate = (date) => {
+      let dateMins = date.getMinutes()
+      let dateHours = date.getHours()
+
+      let normalisedMins = dateMins < 10 ? `0${dateMins}` : dateMins;
+      let normalisedHours = dateHours < 10 ? `0${dateHours}` : dateHours;
+      
+      return `${normalisedHours}:${normalisedMins}`
+
+  } 
+  
+</script>
+
+</html>
